@@ -1,5 +1,5 @@
 define floorplan model (
-	color "SlateGray"
+	color "black"
 	boundary 1
 	gui_nose 1
 	gui_grid 0
@@ -17,9 +17,9 @@ window(
 )
 
 floorplan (
-	size [27.05 21.65 1.000]
-	pose [13.525 10.825 0.000 0.000]
-	bitmap "../maps/earth.pgm"
+	size [80.05 25.65 0.800]
+	pose [11.525 10.825 0.000 0.000]
+	bitmap "../maps/earth.png"
 )
 
 include "../robots/simple_robot.inc"

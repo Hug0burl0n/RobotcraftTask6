@@ -1,6 +1,7 @@
 #include <iostream>
 
 #include <cstdlib>
+#include <random>
 
 #include "ros/ros.h"
 #include "sensor_msgs/LaserScan.h"
@@ -14,27 +15,86 @@ private:
     ros::Publisher cmd_vel_pub;
     ros::Subscriber laser_sub;
 
-    double obstacle_distance;
+    float obstacle_distance;
+    float obstacle_distance_left;
+    float obstacle_distance_front;
+    float obstacle_distance_right;
     bool robot_stopped;
+    bool right_before;
 
     geometry_msgs::Twist calculateCommand()
     {
         auto msg = geometry_msgs::Twist();
 
-        if(obstacle_distance > 0.5){
-            msg.linear.x = 1.0;
-            msg.angular.z = 0;
-        }else{
+        if(obstacle_distance > 0.8){
+            // random
+            int random_number = rand() % 15 + 1 ; // random number between 1 and 15
+            if(random_number==5){
+                msg.angular.z = 10; 
+                msg.linear.x = 0.0;
+            }
+            else if (random_number==4){
+                msg.angular.z = -10; 
+                msg.linear.x = 0.0;
+            }
+            else {
+                msg.linear.x = 1.0;
+                msg.angular.z = 0.0;
+            }
+        }
+        else if ((obstacle_distance_right < 0.8) && (obstacle_distance_front < 0.8)){
             msg.linear.x = 0.0;
-            msg.angular.z = 10;
-        }       
+	    if (right_before){
+		msg.angular.z = -10.0;
+	        right_before = true;
+	    }
+	    else{
+		msg.angular.z = 10.0;
+		right_before = false;
+	    }
+        }
+        else if ((obstacle_distance_left < 0.8) && (obstacle_distance_front < 0.8)){
+            msg.linear.x = 0.0;
+	    if (!right_before){
+		msg.angular.z = 10.0;
+		right_before = false;
+	    }
+	    else{
+		msg.angular.z = -10.0;
+	        right_before = true;
+	    }
+        }
+        else if (obstacle_distance_left < 0.8){
+            msg.linear.x = 0.0;
+            msg.angular.z = -10.0;
+        }
+        else if (obstacle_distance_right < 0.8){
+            msg.linear.x = 0.0;
+            msg.angular.z = 10.0;
+        }
+        else {
+	    ROS_INFO("else                                 ");
+            int random_angular_number = rand() % 2 + 1 ; // random number between 1 and 2
+            if (random_angular_number==1){
+                msg.linear.x = 0.0;
+                msg.angular.z = 5.0;
+            }
+            else {
+                msg.linear.x = 0.0;
+                msg.angular.z = -5.0;                
+            }
+        }
         return msg;
     }
 
     void laserCallback(const sensor_msgs::LaserScan::ConstPtr& msg)
     {
-        obstacle_distance = *std::min_element(msg->ranges.begin(), msg->ranges.end());
-        ROS_INFO("Min distance to obstacle: %f", obstacle_distance);
+        obstacle_distance_right = *std::min_element(msg->ranges.begin(),msg->ranges.begin()+80);
+        obstacle_distance_front = *std::min_element(msg->ranges.begin()+81,msg->ranges.begin()+160.0);
+        obstacle_distance_left = *std::min_element(msg->ranges.begin()+160.0,msg->ranges.end());
+        obstacle_distance = *std::min_element(msg->ranges.begin(),msg->ranges.end()); 
+
+
     }
 
 
